@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geometry Dash Klonu (Bloklar ve Üçgenler)</title>
+    <title>GUMETRY DUSH Burak için</title>
     
     <style>
-        /* CSS Kodları Başlangıcı */
+        /* CSS Kodları Başlangıcı: GD Estetiği */
         body {
             font-family: 'Arial Black', Gadget, sans-serif;
             display: flex;
@@ -15,7 +15,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background: linear-gradient(135deg, #1c1c1c, #444);
+            background: linear-gradient(135deg, #00bfff, #008080); /* Daha canlı GD mavisi */
             color: #ecf0f1;
             overflow: hidden;
             user-select: none;
@@ -23,7 +23,7 @@
         }
 
         #game-container {
-            background-color: #2c3e50;
+            background-color: #000000; /* Siyah arka plan */
             border-radius: 10px;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
             padding: 20px;
@@ -35,8 +35,8 @@
         #game-screen {
             width: 100%;
             height: 300px;
-            background-color: #1a1a1a;
-            border: 5px solid #f1c40f;
+            background-color: #000000;
+            border: 5px solid #2ecc71; /* Yeşil çerçeve */
             position: relative;
             overflow: hidden;
             cursor: pointer;
@@ -46,13 +46,13 @@
             position: absolute;
             width: 30px;
             height: 30px;
-            background-color: #3498db;
+            background-color: #f1c40f; /* Sarı kare (GD Ikonik renk) */
             left: 50px;
             bottom: 10px; 
             border: 3px solid #fff;
-            box-shadow: 0 0 15px rgba(52, 152, 219, 0.8);
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.9);
             transition: transform 0.1s;
-            z-index: 20; /* Oyuncunun üstte görünmesini sağlar */
+            z-index: 20;
         }
         
         #player.rotate {
@@ -60,27 +60,36 @@
         }
 
         /* --- Engel Türleri --- */
-        .obstacle, .block {
+        .obstacle, .block, .jumppad {
             position: absolute;
             bottom: 10px;
             right: -40px;
             z-index: 10;
         }
 
+        /* Düzeltilmiş Üçgen (Ters değil, dik duruyor) */
         .obstacle {
             width: 0;
             height: 0;
             border-left: 20px solid transparent;
             border-right: 20px solid transparent;
             border-bottom: 40px solid #e74c3c; /* Kırmızı Üçgen */
-            transform: rotate(180deg); 
+            /* transform: rotate(180deg) kaldırıldı */
         }
 
         .block {
             width: 50px;
-            height: 80px; /* Daha yüksek bloklar */
-            background-color: #7f8c8d; /* Gri bloklar */
-            border: 3px solid #bdc3c7;
+            background-color: #34495e; /* Koyu mavi bloklar */
+            border: 3px solid #2c3e50;
+            transition: height 0s; /* Zıplama yüksekliğini pürüzsüz yapar */
+        }
+
+        .jumppad {
+            width: 30px;
+            height: 15px;
+            background-color: #3498db; /* Mavi zıplama pedi */
+            border-radius: 5px;
+            bottom: 10px;
         }
         
         #ground {
@@ -88,8 +97,8 @@
             bottom: 0;
             width: 100%;
             height: 10px;
-            background-color: #f39c12;
-            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.5);
+            background-color: #27ae60; /* Yeşil zemin */
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.5);
             z-index: 5;
         }
 
@@ -133,7 +142,7 @@
 </head>
 <body>
     <div id="game-container">
-        <h1>GEOMETRY DASH KLONU</h1>
+        <h1>GEOMETRY DASH KLONU (10 BÖLÜM)</h1>
         <div style="display: flex; justify-content: center;">
             <div id="level-display">Bölüm: <span id="level">1</span>/10</div>
             <div id="score-display">Puan: <span id="score">0</span></div>
@@ -149,7 +158,7 @@
     </div>
 
     <script>
-        // JavaScript Kodları Başlangıcı: Blok Çarpışması Eklendi
+        // JavaScript Kodları Başlangıcı: Geometry Dash Deseni ve Blok Yüksekliği Eklendi
         
         const gameScreen = document.getElementById('game-screen');
         const player = document.getElementById('player');
@@ -168,21 +177,28 @@
         let velocityY = 0; 
         const GROUND_LEVEL = 10;
         const PLAYER_SIZE = 30;
-        const JUMP_POWER = 16; // Zıplama gücü artırıldı
+        const BLOCK_SIZE = 50; // Blok genişliği
+        const JUMP_POWER = 16;
+        const JUMP_PAD_POWER = 25; // Zıplama pedi gücü
         const BASE_GRAVITY = 1;
 
-        // Engel türleri: 0=Boşluk, 1=Üçgen, 2=Blok
+        // Engel türleri: 0=Boşluk, 1=Üçgen, 2=Blok, 3=Zıplama Pedi (Jump Pad)
+        // YENİ SEVİYE DESENİ (Merdiven ve GD İlk Bölümüne Benzer Desenler)
         const LEVELS = [
-            { speed: 6, pattern: [0, 1, 0, 0, 2, 0, 1, 1, 0, 2, 0, 1, 0, 0, 2, 1, 0, 1] }, // Başlangıç seviyesi
-            { speed: 7, pattern: [1, 0, 2, 0, 1, 1, 0, 2, 2, 0, 1, 0, 2, 0, 1, 1, 0, 2] },
-            { speed: 8, pattern: [1, 2, 0, 1, 1, 2, 0, 2, 1, 0, 1, 2, 1, 1, 0, 2, 2, 1] },
-            { speed: 9, pattern: [1, 0, 1, 2, 1, 0, 2, 1, 2, 0, 1, 2, 2, 1, 0, 1, 2, 1] },
-            { speed: 10, pattern: [1, 1, 2, 0, 1, 2, 1, 1, 2, 1, 0, 2, 1, 1, 2, 1, 0, 1] },
-            { speed: 11, pattern: [1, 2, 1, 2, 1, 0, 2, 1, 2, 1, 2, 1, 0, 2, 1, 2, 1, 0] },
-            { speed: 12, pattern: [1, 1, 2, 2, 1, 0, 1, 2, 2, 1, 1, 0, 2, 2, 1, 1, 2, 1] },
+            // Level 1: Stereo Madness Başlangıcı (Basit merdivenler ve tek üçgenler)
+            { speed: 6, pattern: [0, 1, 0, 0, 2, 0, 2, 2, 0, 1, 0, 0, 2, 0, 2, 2, 2, 0, 1] }, 
+            // Level 2: Merdivenler ve Zıplama Pedleri
+            { speed: 7, pattern: [1, 0, 2, 0, 2, 0, 2, 3, 0, 1, 0, 2, 0, 2, 0, 1] }, 
+            // Level 3: Daha Sık Üçgenler
+            { speed: 8, pattern: [1, 1, 0, 2, 0, 1, 1, 0, 2, 0, 1, 1, 1, 0, 2, 0, 1] },
+            // Level 4: Yüksek Blok Atlamaları
+            { speed: 9, pattern: [0, 2, 0, 0, 2, 2, 0, 1, 0, 2, 2, 0, 2, 0, 1, 1] }, 
+            { speed: 10, pattern: [1, 0, 2, 1, 0, 2, 2, 1, 0, 2, 2, 0, 1, 0, 2, 1, 1] },
+            { speed: 11, pattern: [1, 2, 0, 1, 1, 2, 0, 2, 1, 0, 1, 2, 1, 1, 0, 2, 2, 1] },
+            { speed: 12, pattern: [1, 1, 2, 2, 0, 1, 2, 2, 1, 1, 0, 2, 2, 1, 1, 2, 1] },
             { speed: 13, pattern: [1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2] },
             { speed: 14, pattern: [1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2] },
-            { speed: 15, pattern: [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2] } // Maksimum zorluk
+            { speed: 15, pattern: [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2] }
         ];
         
         let obstacleIndex = 0; 
@@ -202,7 +218,7 @@
             clearObstacles();
             obstacleIndex = 0;
 
-            gameLoop = setInterval(updateGame, 20); // Ana oyun döngüsü
+            gameLoop = setInterval(updateGame, 20);
             scheduleNextObstacle(); 
         }
 
@@ -223,28 +239,40 @@
         }
 
         // --- Zıplama Mantığı ---
-        function jump() {
-            // Sadece zemindeyse veya bir bloğun üstündeyse zıplamaya izin ver
+        function jump(power = JUMP_POWER) {
             const playerBottom = parseInt(player.style.bottom);
             if (playerBottom === GROUND_LEVEL || isStandingOnBlock()) {
                  isJumping = true;
-                 velocityY = JUMP_POWER; 
+                 velocityY = power; 
             }
         }
 
-        gameScreen.addEventListener('click', jump);
+        gameScreen.addEventListener('click', () => jump()); // Varsayılan zıplama
         startButton.addEventListener('click', startGame);
 
         // --- Engel Oluşturma ve Programlama ---
-        function createObstacle(type) {
+        function createObstacle(type, prevType) {
             const element = document.createElement('div');
             element.style.right = '-40px'; 
             
-            if (type === 1) {
-                element.classList.add('obstacle'); // Üçgen
-            } else if (type === 2) {
-                element.classList.add('block'); // Blok
-                element.dataset.type = 'block'; // Çarpışma için tür bilgisi
+            if (type === 1) { // Üçgen
+                element.classList.add('obstacle');
+            } else if (type === 2) { // Blok
+                element.classList.add('block');
+                element.dataset.type = 'block';
+
+                // Blok Yüksekliğini Ayarla (Merdiven Efekti)
+                let height = 40; // Varsayılan yükseklik
+                if (prevType === 2 && Math.random() < 0.7) { // Önceki de bloksa
+                    height = 80; // Daha yüksek yap
+                } else if (prevType === 0 || prevType === 1) {
+                    height = 40 + Math.floor(Math.random() * 3) * 40; // Farklı yükseklikler
+                }
+                
+                element.style.height = `${height}px`;
+            } else if (type === 3) { // Zıplama Pedi
+                element.classList.add('jumppad');
+                element.dataset.type = 'jumppad';
             }
             
             gameScreen.appendChild(element);
@@ -261,8 +289,10 @@
             }
 
             const obstacleType = pattern[obstacleIndex];
+            const prevType = obstacleIndex > 0 ? pattern[obstacleIndex - 1] : 0;
+            
             if (obstacleType !== 0) {
-                createObstacle(obstacleType);
+                createObstacle(obstacleType, prevType);
             }
 
             obstacleIndex++;
@@ -275,7 +305,8 @@
         
         // --- Bölüm Atlama Mantığı ---
         function levelUp() {
-            clearTimeout(obstacleTimeout);
+            // (LevelUp mantığı önceki kod ile aynı kalmıştır.)
+             clearTimeout(obstacleTimeout);
             clearObstacles();
             
             if (currentLevel < LEVELS.length) {
@@ -293,7 +324,7 @@
                 }, 1500);
 
             } else {
-                endGame(true); // Tüm bölümler bitti
+                endGame(true);
             }
         }
 
@@ -303,7 +334,7 @@
             let playerBottom = parseInt(player.style.bottom);
 
             // 1. Yerçekimini Uygula
-            if (playerBottom > GROUND_LEVEL || isJumping) {
+            if (playerBottom > GROUND_LEVEL || velocityY !== 0) {
                 velocityY -= BASE_GRAVITY;
                 playerBottom += velocityY;
             }
@@ -311,33 +342,34 @@
             // 2. Blok ve Zemin Kontrolü
             let isLanding = false;
             let currentLandingHeight = GROUND_LEVEL;
+            let onJumpPad = false; // Zıplama pedi kontrolü
 
-            // Tüm engelleri kontrol et (Çarpışma ve Üstüne Çıkma)
-            document.querySelectorAll('.obstacle, .block').forEach(element => {
+            document.querySelectorAll('.obstacle, .block, .jumppad').forEach(element => {
                 const elementRect = element.getBoundingClientRect();
                 const playerRect = player.getBoundingClientRect();
 
-                let elementBottom = parseInt(element.style.bottom) || GROUND_LEVEL;
-                
                 // Engel hareketini uygula
                 let currentRight = parseInt(element.style.right);
                 element.style.right = `${currentRight + currentSpeed}px`;
 
+                // Çarpışma Kontrolü
                 if (element.classList.contains('obstacle')) {
-                    // Üçgen Çarpışması
-                    if (checkCollision(playerRect, elementRect, element)) {
-                        endGame(false);
-                    }
+                    if (checkCollision(playerRect, elementRect)) endGame(false);
                 } else if (element.classList.contains('block')) {
-                    // Blok Üstüne Çıkma Kontrolü (Sadece düşerken veya zıplama bitmişken)
+                    // Blok Üstüne Çıkma
                     if (playerRect.right > elementRect.left &&
                         playerRect.left < elementRect.right &&
-                        playerBottom >= elementRect.height + elementBottom - 5 && // Oyuncunun altı, bloğun tepesinden az farkla yüksekse
-                        playerBottom <= elementRect.height + elementBottom + 5 && // ve çok fazla yukarıda değilse
-                        velocityY <= 0) { // Oyuncu düşüyorsa
+                        playerBottom >= elementRect.height + GROUND_LEVEL - 5 &&
+                        playerBottom <= elementRect.height + GROUND_LEVEL + 5 &&
+                        velocityY <= 0) { 
                         
                         isLanding = true;
-                        currentLandingHeight = elementRect.height + elementBottom;
+                        currentLandingHeight = elementRect.height + GROUND_LEVEL;
+                    }
+                } else if (element.classList.contains('jumppad')) {
+                    // Zıplama Pedi Kontrolü (Üzerinden geçerken)
+                    if (checkCollision(playerRect, elementRect) && playerBottom === GROUND_LEVEL) {
+                        onJumpPad = true;
                     }
                 }
             });
@@ -355,8 +387,13 @@
             
             player.style.bottom = `${playerBottom}px`;
 
+            // Zıplama Pedi Aktifleşmesi
+            if (onJumpPad && playerBottom === GROUND_LEVEL) {
+                jump(JUMP_PAD_POWER); // Ekstra güçlü zıplama
+            }
+
             // 4. Animasyon ve Skor
-            if (isJumping) {
+            if (isJumping || playerBottom > GROUND_LEVEL) {
                  player.classList.add('rotate');
             } else {
                  player.classList.remove('rotate');
@@ -366,28 +403,25 @@
             scoreDisplay.textContent = Math.floor(score / 100); 
         }
         
-        // --- Yardımcı Çarpışma Kontrolü ---
-        function checkCollision(playerRect, obstacleRect, element) {
-            // Üçgenler için daha hassas kontrol gerekebilir, şimdilik basit AABB kullanıyoruz
+        // --- Yardımcı Çarpışma Kontrolü (Basit AABB) ---
+        function checkCollision(playerRect, obstacleRect) {
             return (playerRect.right > obstacleRect.left &&
                     playerRect.left < obstacleRect.right &&
-                    playerRect.bottom > obstacleRect.top + 10 && 
+                    playerRect.bottom > obstacleRect.top && 
                     playerRect.top < obstacleRect.bottom);
         }
         
         function isStandingOnBlock() {
-            const playerRect = player.getBoundingClientRect();
+            const playerBottom = parseInt(player.style.bottom);
             let onBlock = false;
 
             document.querySelectorAll('.block').forEach(block => {
                 const blockRect = block.getBoundingClientRect();
-                const playerBottom = parseInt(player.style.bottom);
                 const blockHeight = blockRect.height;
-                const blockBottom = parseInt(block.style.bottom) || GROUND_LEVEL;
-
+                
                 if (playerRect.right > blockRect.left &&
                     playerRect.left < blockRect.right &&
-                    playerBottom === blockHeight + blockBottom) {
+                    playerBottom === blockHeight + GROUND_LEVEL) {
                     onBlock = true;
                 }
             });
@@ -396,7 +430,7 @@
 
         // --- Engel Temizleme ---
         function clearObstacles() {
-            document.querySelectorAll('.obstacle, .block').forEach(obs => obs.remove());
+            document.querySelectorAll('.obstacle, .block, .jumppad').forEach(obs => obs.remove());
         }
         
         // Başlangıç mesajını göster
