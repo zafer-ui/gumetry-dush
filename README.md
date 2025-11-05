@@ -1,0 +1,2 @@
+# gumetry-dush
+açıklamayı yedim
