@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gumetry Dush Burak İçin</title>
+    <title>Geometry Dash Stereo Madness Klonu - Çalışıyor</title>
     
     <style>
         /* CSS Kodları Başlangıcı: GD Estetiği */
@@ -89,7 +89,7 @@
         .jumppad {
             width: 30px;
             height: 15px;
-            background-color: #3498db; /* Mavi zıplama pedi */
+            background-color: #3498db; 
             border-radius: 5px;
             bottom: 10px;
         }
@@ -144,7 +144,7 @@
 </head>
 <body>
     <div id="game-container">
-        <h1>Gumetry Dush Burak İçin</h1>
+        <h1>GEOMETRY DASH STEREO MADNESS</h1>
         <div style="display: flex; justify-content: center;">
             <div id="level-display">Bölüm: <span id="level">1</span>/10</div>
             <div id="score-display">Puan: <span id="score">0</span></div>
@@ -160,7 +160,7 @@
     </div>
 
     <script>
-        // JavaScript Kodları Başlangıcı: Zıplama Pedi Mantığı Geliştirildi
+        // JavaScript Kodları Başlangıcı
         
         const gameScreen = document.getElementById('game-screen');
         const player = document.getElementById('player');
@@ -181,13 +181,13 @@
         const PLAYER_SIZE = 30;
         const BLOCK_SIZE = 50; 
         const JUMP_POWER = 16;
-        const JUMP_PAD_POWER = 28; // Daha yükseğe zıplatması için artırıldı
+        const JUMP_PAD_POWER = 28;
         const BASE_GRAVITY = 1;
 
         // Engel türleri: 0=Boşluk, 1=Üçgen, 2=Blok, 3=Zıplama Pedi (Jump Pad)
         // [Type, Height_Factor]
         const LEVELS = [
-            // Level 1: Stereo Madness Başlangıcı - Kademeli bloklar
+            // Level 1: Stereo Madness Başlangıcı
             { speed: 6, pattern: [
                 [0, 0], [0, 0], [1, 0], [0, 0], [2, 1], [0, 0], [2, 2], [0, 0], [2, 3], [0, 0], 
                 [1, 0], [0, 0], [0, 0], [2, 2], [0, 0], [1, 0], [0, 0], [2, 1], [0, 0]
@@ -197,13 +197,13 @@
                 [2, 2], [2, 2], [0, 0], [1, 1], [0, 0], [2, 1], [2, 1], [0, 0], 
                 [1, 0], [0, 0], [2, 3], [0, 0], [1, 1], [0, 0]
             ]},
-            // Level 3: Zıplama Pedi Geçişi (İstenilen zorluk)
+            // Level 3: Zıplama Pedi Geçişi (Zorunlu zıplama)
             { speed: 8, pattern: [
                 [0, 0], [0, 0], [2, 2], [2, 2], [0, 0], [1, 0], [0, 0], 
-                [3, 0], [0, 0], [1, 0], [1, 0], [1, 0], [1, 0], // Zıplama pedi ve 4 üçgen
+                [3, 0], [0, 0], [1, 0], [1, 0], [1, 0], [1, 0], 
                 [0, 0], [2, 1], [0, 0], [1, 0]
             ]},
-            // Diğer seviyeler
+            // Diğer seviyeler (Tekrar eden desen, artan hız)
             { speed: 9, pattern: LEVELS[2].pattern },
             { speed: 10, pattern: LEVELS[2].pattern },
             { speed: 11, pattern: LEVELS[2].pattern },
@@ -214,7 +214,6 @@
         ];
         
         let obstacleIndex = 0; 
-        let lastBlockHeight = 0; 
 
         // --- Başlangıç ve Bitiş Fonksiyonları ---
         function startGame() {
@@ -223,10 +222,14 @@
             gameRunning = true;
             score = 0;
             currentLevel = 1;
-            lastBlockHeight = 0;
             levelDisplay.textContent = currentLevel;
             scoreDisplay.textContent = score;
-            player.style.bottom = `${GROUND_LEVEL}px`;
+            
+            // DÜZELTİLDİ: Oyuncuyu zemine konumlandırıyoruz
+            player.style.bottom = `${GROUND_LEVEL}px`; 
+            isJumping = false;
+            velocityY = 0;
+
             startButton.classList.add('hidden');
             message.classList.add('hidden');
             clearObstacles();
@@ -279,8 +282,6 @@
 
                 const height = (heightFactor * 40) + 40;
                 element.style.height = `${height}px`;
-                lastBlockHeight = height; 
-
             } else if (type === 3) { // Zıplama Pedi
                 element.classList.add('jumppad');
                 element.dataset.type = 'jumppad';
@@ -322,7 +323,6 @@
             if (currentLevel < LEVELS.length) {
                 currentLevel++;
                 levelDisplay.textContent = currentLevel;
-                lastBlockHeight = 0; 
                 
                 message.textContent = `BÖLÜM ${currentLevel} BAŞLADI! HIZ ARTTI.`;
                 message.style.color = '#f1c40f';
@@ -351,35 +351,30 @@
             }
 
             // 2. Blok, Zemin ve Pedi Kontrolü
-            let isLanding = false;
+            let isLandedOnBlock = false;
             let currentLandingHeight = GROUND_LEVEL;
 
             document.querySelectorAll('.obstacle, .block, .jumppad').forEach(element => {
                 const elementRect = element.getBoundingClientRect();
                 const playerRect = player.getBoundingClientRect();
+                const elementTop = elementRect.top - gameScreen.getBoundingClientRect().top; // Elementin game-screen'e göre üst konumu
 
                 // Engel hareketini uygula
                 let currentRight = parseInt(element.style.right);
                 element.style.right = `${currentRight + currentSpeed}px`;
 
                 // Çarpışma Kontrolü
-                if (element.classList.contains('obstacle')) {
-                    if (checkCollision(playerRect, elementRect, 'lethal')) endGame(false);
-                } else if (element.classList.contains('jumppad')) {
-                    // Zıplama Pedi: Yere basıyorsa ve üzerine geliyorsa otomatik zıplat
-                    if (checkCollision(playerRect, elementRect, 'lethal') && playerBottom === GROUND_LEVEL) {
-                        jump(JUMP_PAD_POWER);
-                    }
-                } else if (element.classList.contains('block')) {
-                    // Blok: Yan ve alt ölüm; üst iniş
-                    if (checkCollision(playerRect, elementRect, 'block')) {
-                        const blockTopY = elementRect.top;
-                        const playerBottomY = playerRect.bottom;
+                if (checkCollision(playerRect, elementRect)) {
+                    if (element.classList.contains('obstacle')) {
+                        endGame(false); // Üçgen çarpışması her zaman ölümcüldür
+                    } else if (element.classList.contains('jumppad') && playerBottom === GROUND_LEVEL) {
+                        jump(JUMP_PAD_POWER); // Zıplama Pedi çarpışması
+                    } else if (element.classList.contains('block')) {
                         
-                        // Üstten İniş Kontrolü
-                        if (velocityY <= 0 && playerBottomY >= blockTopY - 5 && playerBottomY <= blockTopY + 10) { 
-                            // landingHeight'ı ayarla
-                            currentLandingHeight = blockTopY - gameScreen.getBoundingClientRect().top; 
+                        // İniş Kontrolü (Blok tepesine vurulursa ve düşüyorsa)
+                        if (velocityY <= 0 && playerRect.bottom > elementRect.top && playerRect.bottom <= elementRect.top + 10) { 
+                            isLandedOnBlock = true;
+                            currentLandingHeight = elementTop;
                         } else {
                             // Yan veya Alttan Çarpışma: Ölüm
                              endGame(false);
@@ -388,16 +383,14 @@
                 }
             });
 
-            // 3. Zemine İniş Kararı
-            const newLandingHeight = getCurrentLandingHeight();
+            // 3. Zemine İniş Kararı (Önceki bloklar dahil)
+            const finalLandingHeight = getCurrentLandingHeight();
             
-            if (playerBottom < newLandingHeight) {
-                playerBottom = newLandingHeight;
+            if (playerBottom < finalLandingHeight) {
+                playerBottom = finalLandingHeight;
                 isJumping = false;
                 velocityY = 0;
-            } else if (playerBottom > newLandingHeight) {
-                 if (playerBottom < GROUND_LEVEL) playerBottom = GROUND_LEVEL;
-            }
+            } 
             
             player.style.bottom = `${playerBottom}px`;
 
@@ -412,44 +405,29 @@
             scoreDisplay.textContent = Math.floor(score / 100); 
         }
         
-        // --- Çarpışma Kontrolü (Hassaslaştırılmış) ---
-        function checkCollision(playerRect, elementRect, type) {
-            // Basit AABB çarpışma kontrolü
-            if (playerRect.right > elementRect.left &&
-                playerRect.left < elementRect.right &&
-                playerRect.bottom > elementRect.top && 
-                playerRect.top < elementRect.bottom) {
-                
-                if (type === 'lethal') {
-                    // Üçgenler ve Zıplama Pedi (pedin üstünden geçerken)
-                    return true;
-                } else if (type === 'block') {
-                    // Bloklar
-                    const blockTopY = elementRect.top;
-                    const playerBottomY = playerRect.bottom;
-                    
-                    // Bloklar için, sadece iniş anı haricinde her çarpışma ölümcül
-                    if (!(velocityY <= 0 && playerBottomY >= blockTopY && playerBottomY <= blockTopY + 10)) {
-                        return true; // Ölümcül çarpışma
-                    }
-                }
-            }
-            return false;
+        // --- Çarpışma Kontrolü (Basit AABB) ---
+        function checkCollision(playerRect, elementRect) {
+            return (playerRect.right > elementRect.left &&
+                    playerRect.left < elementRect.right &&
+                    playerRect.bottom > elementRect.top && 
+                    playerRect.top < elementRect.bottom);
         }
 
         // Oyuncunun inebileceği mevcut yüksekliği hesaplar
         function getCurrentLandingHeight() {
             let landingHeight = GROUND_LEVEL;
             const playerRect = player.getBoundingClientRect();
+            const gameScreenRect = gameScreen.getBoundingClientRect();
             
             document.querySelectorAll('.block').forEach(block => {
                 const blockRect = block.getBoundingClientRect();
                 
+                // Oyuncu x konumunda bloğun üzerindeyse
                 if (playerRect.right > blockRect.left && playerRect.left < blockRect.right) {
-                    const blockTop = blockRect.top - gameScreen.getBoundingClientRect().top;
                     
-                    // Oyuncu bloğun tepesine yakınsa
-                    if (playerRect.bottom >= blockRect.top && playerRect.bottom <= blockRect.top + PLAYER_SIZE) {
+                    // Blok oyuncunun altındaysa (iniş)
+                    if (blockRect.top > playerRect.bottom - 5 && blockRect.top < playerRect.bottom + 10) {
+                        const blockTop = blockRect.top - gameScreenRect.top;
                         if (blockTop > landingHeight) {
                             landingHeight = blockTop;
                         }
