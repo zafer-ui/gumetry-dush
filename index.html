@@ -3,350 +3,414 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>10 Bölümlük Tek Tıkla Koşucu (Level Dash)</title>
-    
+    <title>Süper Tıkla-Zıpla Platformer</title>
     <style>
-        /* CSS Kodları Başlangıcı: Önceki sürümle aynı estetik */
         body {
-            font-family: 'Arial Black', Gadget, sans-serif;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background: linear-gradient(135deg, #1c1c1c, #444);
+            background-color: #2c3e50; /* Koyu Mavi Arkaplan */
+            font-family: sans-serif;
             color: #ecf0f1;
-            overflow: hidden;
-            user-select: none;
-            touch-action: manipulation;
+            flex-direction: column;
         }
 
-        #game-container {
-            background-color: #2c3e50;
-            border-radius: 10px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
-            padding: 20px;
-            width: 95vw;
-            max-width: 800px;
+        #gameCanvas {
+            border: 5px solid #ecf0f1; /* Açık Kenarlık */
+            background-color: #34495e; /* Daha Koyu Oyun Alanı */
+            cursor: pointer; /* Tıklanabilir olduğunu belirtir */
+            display: block;
+        }
+
+        #infoPanel {
+            margin-top: 10px;
+            font-size: 1.2em;
             text-align: center;
         }
 
-        #game-screen {
-            width: 100%;
-            height: 300px;
-            background-color: #1a1a1a;
-            border: 5px solid #f1c40f;
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-        }
-
-        #player {
+        #startScreen, #endScreen {
             position: absolute;
-            width: 30px;
-            height: 30px;
-            background-color: #3498db;
-            left: 50px;
-            bottom: 10px; /* Zemin yüksekliği */
-            border: 3px solid #fff;
-            box-shadow: 0 0 15px rgba(52, 152, 219, 0.8);
-            transition: transform 0.1s; /* Zıplama animasyonu için */
-        }
-        
-        #player.rotate {
-            transform: rotate(90deg);
+            background-color: rgba(44, 62, 80, 0.95);
+            width: 800px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 5px solid #ecf0f1;
+            z-index: 10;
+            text-align: center;
         }
 
-        .obstacle {
-            position: absolute;
-            width: 0;
-            height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-bottom: 40px solid #e74c3c;
-            bottom: 10px; /* Zemin yüksekliği */
-            transform: rotate(180deg); 
-        }
-        
-        #ground {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 10px;
-            background-color: #f39c12;
-            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.5);
-        }
-
-        #score-display, #level-display {
-            font-size: 1.8em;
-            color: #2ecc71;
-            margin: 10px 10px;
-            display: inline-block;
-        }
-
-        #message {
-            font-size: 2.2em;
-            font-weight: bold;
-            color: #e74c3c;
-            padding: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border-radius: 8px;
-            z-index: 100;
-        }
-        
-        .hidden {
-            display: none !important;
-        }
-
-        #start-button {
-            background-color: #3498db;
+        #startScreen button, #endScreen button {
+            padding: 15px 30px;
+            font-size: 1.5em;
+            margin-top: 20px;
+            background-color: #27ae60; /* Yeşil Buton */
             color: white;
             border: none;
-            padding: 15px 40px;
-            font-size: 1.5em;
-            border-radius: 8px;
+            border-radius: 5px;
             cursor: pointer;
-            margin-top: 20px;
+            transition: background-color 0.3s;
         }
-        /* CSS Kodları Bitişi */
+
+        #startScreen button:hover, #endScreen button:hover {
+            background-color: #2ecc71;
+        }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <h1>10 BÖLÜMLÜK KOŞUCU</h1>
-        <div style="display: flex; justify-content: center;">
-            <div id="level-display">Bölüm: <span id="level">1</span>/10</div>
-            <div id="score-display">Puan: <span id="score">0</span></div>
-        </div>
-        
-        <div id="game-screen">
-            <div id="ground"></div>
-            <div id="player"></div>
-            <div id="message" class="hidden">BAŞLAMAK İÇİN TIKLA</div>
-        </div>
-        
-        <button id="start-button">Oyunu Başlat / Yeniden Dene</button>
+
+    <div id="startScreen">
+        <h1>Süper Tıkla-Zıpla Platformer</h1>
+        <p>Geometry Dash Benzeri!</p>
+        <p>Zıplamak için **fareye sol tıkla** veya **boşluk (Space)** tuşuna bas.</p>
+        <button onclick="startGame()">Oyuna Başla</button>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+    <div id="infoPanel">
+        Bölüm: <span id="currentLevel">1</span>
+    </div>
+
+    <div id="endScreen" style="display:none;">
+        <h1 id="endMessage">Bölüm Tamamlandı!</h1>
+        <p id="endDetail"></p>
+        <button onclick="restartGame()">Tekrar Oyna</button>
     </div>
 
     <script>
-        // JavaScript Kodları Başlangıcı: Seviye Mantığı Eklendi
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const infoPanel = document.getElementById('infoPanel');
+        const currentLevelSpan = document.getElementById('currentLevel');
+        const startScreen = document.getElementById('startScreen');
+        const endScreen = document.getElementById('endScreen');
+        const endMessage = document.getElementById('endMessage');
+        const endDetail = document.getElementById('endDetail');
+
+        // --- Oyun Ayarları ---
+        const PLAYER_SIZE = 20;
+        const JUMP_VELOCITY = -10;
+        const GRAVITY = 0.5;
+        const GROUND_Y = canvas.height - 20;
+        const GAME_SPEED = 4;
+        const MAX_LEVEL = 5;
+
+        // --- Oyun Durumu ---
+        let player = {
+            x: 50,
+            y: GROUND_Y - PLAYER_SIZE,
+            vy: 0,
+            isJumping: false
+        };
+
+        let obstacles = [];
+        let level = 1;
+        let isGameOver = false;
+        let gameLoopId;
+        let gameStarted = false;
+
+        // --- Bölüm Tasarımları (Platformlar ve Engeller) ---
+        // Format: [x pozisyonu, y pozisyonu (yüksek engel için), genişlik, yükseklik, tip ('block' veya 'spike' (üçgen))]
+        // x pozisyonu: Başlangıçtan ne kadar uzakta (oyun hızıyla çarpılacak)
         
-        const gameScreen = document.getElementById('game-screen');
-        const player = document.getElementById('player');
-        const scoreDisplay = document.getElementById('score');
-        const levelDisplay = document.getElementById('level');
-        const startButton = document.getElementById('start-button');
-        const message = document.getElementById('message');
-
-        // --- Oyun Değişkenleri ---
-        let isJumping = false;
-        let gameLoop;
-        let obstacleTimeout;
-        let score = 0;
-        let currentLevel = 1;
-        let gameRunning = false;
-        let velocityY = 0; 
-        const GROUND_LEVEL = 10;
-        const JUMP_POWER = 15;
-        const BASE_GRAVITY = 1;
-
-        // Her seviye için zorluk ve engel dizisi
-        const LEVELS = [
-            { speed: 5, difficulty: 'easy', obstaclePattern: [1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1] },
-            { speed: 6, difficulty: 'easy-med', obstaclePattern: [1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0] },
-            { speed: 7, difficulty: 'medium', obstaclePattern: [1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0] },
-            { speed: 8, difficulty: 'medium-hard', obstaclePattern: [1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1] },
-            { speed: 9, difficulty: 'hard', obstaclePattern: [1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1] },
-            { speed: 10, difficulty: 'very-hard', obstaclePattern: [1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1] },
-            { speed: 11, difficulty: 'extreme', obstaclePattern: [1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0] },
-            { speed: 12, difficulty: 'insane', obstaclePattern: [1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1] },
-            { speed: 13, difficulty: 'impossible', obstaclePattern: [1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0] },
-            { speed: 14, difficulty: 'final-boss', obstaclePattern: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] } // Maksimum zorluk
+        const levelData = [
+            // Level 1: Temel Zıplamalar
+            [
+                [200, GROUND_Y - 40, 30, 40, 'block'],
+                [350, GROUND_Y - 40, 30, 40, 'block'],
+                [550, GROUND_Y - 20, 20, 20, 'spike'],
+                [700, GROUND_Y - 40, 30, 40, 'block'],
+                [800, GROUND_Y - 20, 20, 20, 'spike'],
+                [1000, GROUND_Y - 40, 30, 40, 'block'],
+                [1200, GROUND_Y - 20, 20, 20, 'spike'],
+                [1450, GROUND_Y - 40, 30, 40, 'block'],
+                [1600, GROUND_Y - 20, 20, 20, 'spike'],
+                [1800, GROUND_Y - 20, 20, 20, 'finish'] // Bitiş
+            ],
+            // Level 2: Çift Engeller ve Platformlar
+            [
+                [200, GROUND_Y - 20, 20, 20, 'spike'],
+                [230, GROUND_Y - 20, 20, 20, 'spike'],
+                [400, GROUND_Y - 60, 50, 60, 'block'], // Yüksek Platform
+                [600, GROUND_Y - 20, 20, 20, 'spike'],
+                [630, GROUND_Y - 20, 20, 20, 'spike'],
+                [800, GROUND_Y - 40, 30, 40, 'block'],
+                [900, GROUND_Y - 20, 20, 20, 'spike'],
+                [930, GROUND_Y - 20, 20, 20, 'spike'],
+                [1200, GROUND_Y - 60, 50, 60, 'block'],
+                [1400, GROUND_Y - 20, 20, 20, 'spike'],
+                [1430, GROUND_Y - 20, 20, 20, 'spike'],
+                [1600, GROUND_Y - 40, 30, 40, 'block'],
+                [1800, GROUND_Y - 20, 20, 20, 'finish']
+            ],
+            // Level 3: Kısa Zıplama Gerektiren Engeller
+            [
+                [200, GROUND_Y - 20, 20, 20, 'spike'],
+                [300, GROUND_Y - 20, 20, 20, 'spike'],
+                [400, GROUND_Y - 20, 20, 20, 'spike'],
+                [550, GROUND_Y - 40, 30, 40, 'block'],
+                [700, GROUND_Y - 20, 20, 20, 'spike'],
+                [750, GROUND_Y - 20, 20, 20, 'spike'],
+                [900, GROUND_Y - 60, 50, 60, 'block'],
+                [1100, GROUND_Y - 20, 20, 20, 'spike'],
+                [1200, GROUND_Y - 20, 20, 20, 'spike'],
+                [1300, GROUND_Y - 20, 20, 20, 'spike'],
+                [1450, GROUND_Y - 40, 30, 40, 'block'],
+                [1800, GROUND_Y - 20, 20, 20, 'finish']
+            ],
+            // Level 4: Karışık Yükseklik ve Sıklık
+            [
+                [200, GROUND_Y - 20, 20, 20, 'spike'],
+                [250, GROUND_Y - 60, 50, 60, 'block'], // Yüksek Platform
+                [400, GROUND_Y - 20, 20, 20, 'spike'],
+                [430, GROUND_Y - 20, 20, 20, 'spike'],
+                [500, GROUND_Y - 40, 30, 40, 'block'], // Orta Platform
+                [650, GROUND_Y - 20, 20, 20, 'spike'],
+                [800, GROUND_Y - 60, 50, 60, 'block'],
+                [950, GROUND_Y - 20, 20, 20, 'spike'],
+                [1000, GROUND_Y - 20, 20, 20, 'spike'],
+                [1100, GROUND_Y - 40, 30, 40, 'block'],
+                [1300, GROUND_Y - 20, 20, 20, 'spike'],
+                [1330, GROUND_Y - 20, 20, 20, 'spike'],
+                [1800, GROUND_Y - 20, 20, 20, 'finish']
+            ],
+            // Level 5: Zorlu Final
+            [
+                [200, GROUND_Y - 20, 20, 20, 'spike'],
+                [230, GROUND_Y - 20, 20, 20, 'spike'],
+                [260, GROUND_Y - 20, 20, 20, 'spike'],
+                [400, GROUND_Y - 60, 50, 60, 'block'],
+                [500, GROUND_Y - 20, 20, 20, 'spike'],
+                [530, GROUND_Y - 20, 20, 20, 'spike'],
+                [700, GROUND_Y - 40, 30, 40, 'block'],
+                [850, GROUND_Y - 20, 20, 20, 'spike'],
+                [880, GROUND_Y - 20, 20, 20, 'spike'],
+                [1000, GROUND_Y - 80, 50, 80, 'block'], // Çok Yüksek Platform
+                [1150, GROUND_Y - 20, 20, 20, 'spike'],
+                [1300, GROUND_Y - 40, 30, 40, 'block'],
+                [1450, GROUND_Y - 20, 20, 20, 'spike'],
+                [1480, GROUND_Y - 20, 20, 20, 'spike'],
+                [1800, GROUND_Y - 20, 20, 20, 'finish']
+            ]
         ];
-        
-        let obstacleIndex = 0; // Hangi engelin sırada olduğunu tutar
 
-        // --- Başlangıç ve Bitiş Fonksiyonları ---
-        function startGame() {
-            if (gameRunning) return;
-            
-            gameRunning = true;
-            score = 0;
-            currentLevel = 1;
-            levelDisplay.textContent = currentLevel;
-            scoreDisplay.textContent = score;
-            player.style.bottom = `${GROUND_LEVEL}px`;
-            startButton.classList.add('hidden');
-            message.classList.add('hidden');
-            clearObstacles();
-            obstacleIndex = 0;
-
-            gameLoop = setInterval(updateGame, 20); // Ana oyun döngüsü
-            scheduleNextObstacle(); // İlk engeli zamanla
+        // Engel Oluşturma Fonksiyonu
+        function createObstacles(levelIndex) {
+            obstacles = [];
+            levelData[levelIndex - 1].forEach(data => {
+                obstacles.push({
+                    x: canvas.width + data[0], // Ekranın dışından başla
+                    y: data[1],
+                    width: data[2],
+                    height: data[3],
+                    type: data[4],
+                    initialX: data[0]
+                });
+            });
         }
 
-        function endGame(win = false) {
-            gameRunning = false;
-            clearInterval(gameLoop);
-            clearTimeout(obstacleTimeout);
-            startButton.classList.remove('hidden');
-            
-            if (win) {
-                message.textContent = `TEBRİKLER! TÜM BÖLÜMLERİ BİTİRDİN!`;
-                message.style.color = '#2ecc71';
-            } else {
-                message.textContent = `OYUN BİTTİ! Bölüm ${currentLevel}'de takıldın. Puan: ${Math.floor(score / 50)}`;
-                message.style.color = '#e74c3c';
-            }
-            message.classList.remove('hidden');
-        }
-
-        // --- Zıplama Mantığı ---
+        // Oyuncu Zıplama Fonksiyonu
         function jump() {
-            if (!isJumping && gameRunning) {
-                isJumping = true;
-                velocityY = JUMP_POWER;
+            if (!player.isJumping) {
+                player.vy = JUMP_VELOCITY;
+                player.isJumping = true;
             }
         }
 
-        gameScreen.addEventListener('click', jump);
-        startButton.addEventListener('click', startGame);
+        // --- Çizim Fonksiyonları ---
 
-        // --- Engel Oluşturma ve Programlama ---
-        function createObstacle() {
-            const obstacle = document.createElement('div');
-            obstacle.classList.add('obstacle');
-            obstacle.style.right = '-40px'; 
-            gameScreen.appendChild(obstacle);
+        function drawPlayer() {
+            ctx.fillStyle = '#f39c12'; // Turuncu Küp
+            ctx.fillRect(player.x, player.y, PLAYER_SIZE, PLAYER_SIZE);
         }
 
-        function scheduleNextObstacle() {
-            if (!gameRunning) return;
+        function drawObstacles() {
+            obstacles.forEach(obs => {
+                if (obs.type === 'block') {
+                    ctx.fillStyle = '#e74c3c'; // Kırmızı Platform
+                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                } else if (obs.type === 'spike') {
+                    ctx.fillStyle = '#c0392b'; // Koyu Kırmızı Diken
+                    ctx.beginPath();
+                    // Üçgen çizimi
+                    ctx.moveTo(obs.x, obs.y + obs.height); // Sol alt
+                    ctx.lineTo(obs.x + obs.width / 2, obs.y); // Üst orta
+                    ctx.lineTo(obs.x + obs.width, obs.y + obs.height); // Sağ alt
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (obs.type === 'finish') {
+                    ctx.fillStyle = '#2980b9'; // Mavi Bitiş Çizgisi
+                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                }
+            });
+        }
 
-            const pattern = LEVELS[currentLevel - 1].obstaclePattern;
-            
-            // Bölüm sonuna ulaşıldıysa
-            if (obstacleIndex >= pattern.length) {
-                levelUp();
+        function drawGround() {
+            ctx.fillStyle = '#2ecc71'; // Yeşil Zemin
+            ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
+        }
+
+        // --- Güncelleme Fonksiyonları ---
+
+        function updatePlayer() {
+            // Yerçekimi
+            player.vy += GRAVITY;
+            player.y += player.vy;
+
+            // Zemin Kontrolü
+            if (player.y + PLAYER_SIZE > GROUND_Y) {
+                player.y = GROUND_Y - PLAYER_SIZE;
+                player.vy = 0;
+                player.isJumping = false;
+            }
+        }
+
+        function updateObstacles() {
+            obstacles.forEach(obs => {
+                obs.x -= GAME_SPEED;
+            });
+
+            // Ekran dışına çıkan engelleri temizle (performans için)
+            obstacles = obstacles.filter(obs => obs.x + obs.width > 0);
+        }
+
+        // --- Çarpışma Kontrolü ---
+        function checkCollision() {
+            for (let obs of obstacles) {
+                // Basit AABB çarpışma kontrolü
+                if (
+                    player.x < obs.x + obs.width &&
+                    player.x + PLAYER_SIZE > obs.x &&
+                    player.y < obs.y + obs.height &&
+                    player.y + PLAYER_SIZE > obs.y
+                ) {
+                    if (obs.type === 'block' || obs.type === 'spike') {
+                        // Engel veya Dikenle çarpışma
+                        gameOver(false);
+                        return true;
+                    } else if (obs.type === 'finish') {
+                        // Bitiş çizgisi
+                        levelComplete();
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // --- Oyun Akışı Fonksiyonları ---
+
+        function gameLoop() {
+            if (isGameOver || !gameStarted) return;
+
+            // 1. Ekranı Temizle
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 2. Güncelle
+            updatePlayer();
+            updateObstacles();
+
+            // 3. Çarpışma Kontrolü
+            if (checkCollision()) {
+                // Çarpışma oldu, gameLoop durdu
                 return;
             }
 
-            // Engelin çıkıp çıkmayacağını kontrol et
-            if (pattern[obstacleIndex] === 1) {
-                createObstacle();
-            }
+            // 4. Çiz
+            drawGround();
+            drawObstacles();
+            drawPlayer();
 
-            obstacleIndex++;
-
-            // Yeni engelin ne kadar süre sonra geleceğini belirle (Hızlandıkça aralık azalır)
-            const speed = LEVELS[currentLevel - 1].speed;
-            const interval = 1500 - (speed * 50); // Hız arttıkça bekleme süresi azalır
-            
-            obstacleTimeout = setTimeout(scheduleNextObstacle, interval);
+            // 5. Döngüyü Tekrarla
+            gameLoopId = requestAnimationFrame(gameLoop);
         }
-        
-        // --- Bölüm Atlama Mantığı ---
-        function levelUp() {
-            clearTimeout(obstacleTimeout);
-            clearObstacles();
-            
-            if (currentLevel < LEVELS.length) {
-                currentLevel++;
-                levelDisplay.textContent = currentLevel;
-                
-                message.textContent = `BÖLÜM ${currentLevel} BAŞLADI!`;
-                message.style.color = '#f1c40f';
-                message.classList.remove('hidden');
-                
-                // Kısa bir bekleme sonrası devam et
-                setTimeout(() => {
-                    message.classList.add('hidden');
-                    obstacleIndex = 0;
-                    scheduleNextObstacle();
-                }, 1500);
 
+        // --- Olay Dinleyicileri ---
+        function handleInput() {
+            jump();
+        }
+
+        canvas.addEventListener('click', handleInput);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') { // Boşluk tuşu
+                e.preventDefault(); // Sayfanın kaymasını engelle
+                handleInput();
+            }
+        });
+
+        // --- Başlatma/Bitirme Fonksiyonları ---
+
+        function startGame() {
+            startScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            isGameOver = false;
+            gameStarted = true;
+            level = 1;
+            resetLevel();
+            gameLoop();
+        }
+
+        function resetLevel() {
+            cancelAnimationFrame(gameLoopId);
+            player.x = 50;
+            player.y = GROUND_Y - PLAYER_SIZE;
+            player.vy = 0;
+            player.isJumping = false;
+            currentLevelSpan.textContent = level;
+            createObstacles(level);
+        }
+
+        function levelComplete() {
+            cancelAnimationFrame(gameLoopId);
+
+            if (level < MAX_LEVEL) {
+                level++;
+                endMessage.textContent = `Bölüm ${level - 1} Başarılı!`;
+                endDetail.textContent = `Hazır mısın? Devam etmek için butona tıkla! (Bölüm ${level})`;
+                endScreen.style.display = 'flex';
+                // Butonun işlevini bir sonraki bölüme geçecek şekilde değiştir
+                const nextButton = endScreen.querySelector('button');
+                nextButton.textContent = `Bölüm ${level}'e Geç`;
+                nextButton.onclick = () => {
+                    resetLevel();
+                    endScreen.style.display = 'none';
+                    gameLoop();
+                };
             } else {
-                endGame(true); // Tüm bölümler bitti
+                // Oyun Bitti (Son Bölüm Tamamlandı)
+                gameOver(true);
             }
         }
 
-        // --- Oyun Güncelleme Döngüsü (Her Karede Çalışır) ---
-        function updateGame() {
-            const currentSpeed = LEVELS[currentLevel - 1].speed;
+        function gameOver(isWin) {
+            isGameOver = true;
+            cancelAnimationFrame(gameLoopId);
+            endScreen.style.display = 'flex';
+            const nextButton = endScreen.querySelector('button');
 
-            // 1. Yerçekimini Uygula
-            if (velocityY > -15) {
-                velocityY -= BASE_GRAVITY;
-            }
-            let currentBottom = parseInt(player.style.bottom);
-            player.style.bottom = `${currentBottom + velocityY}px`;
-
-            // Zıplama animasyonu (Dönme)
-            if (isJumping) {
-                 player.classList.add('rotate');
+            if (isWin) {
+                endMessage.textContent = '🥳 Tebrikler! Oyunu Kazandın!';
+                endDetail.textContent = 'Tüm 5 bölümü de başarıyla tamamladın. Sen bir Geometry Dash ustasısın!';
+                nextButton.textContent = 'Tekrar Oyna';
+                nextButton.onclick = restartGame;
             } else {
-                 player.classList.remove('rotate');
-            }
-
-
-            // 2. Zemine İniş Kontrolü
-            if (parseInt(player.style.bottom) <= GROUND_LEVEL) {
-                player.style.bottom = `${GROUND_LEVEL}px`;
-                isJumping = false;
-                velocityY = 0;
-            }
-            
-            // 3. Skor Artışı
-            score += currentSpeed;
-            scoreDisplay.textContent = Math.floor(score / 100); 
-
-            // 4. Tüm Engelleri Kontrol Et ve Hareket Ettir
-            document.querySelectorAll('.obstacle').forEach(obstacle => {
-                let currentRight = parseInt(obstacle.style.right);
-                
-                obstacle.style.right = `${currentRight + currentSpeed}px`; // Hız seviyeye bağlı
-
-                if (currentRight > gameScreen.offsetWidth + 50) {
-                    obstacle.remove();
-                }
-
-                // Çarpışma Kontrolü
-                checkCollision(obstacle);
-            });
-        }
-        
-        // --- Çarpışma Kontrolü ---
-        function checkCollision(obstacle) {
-            const playerRect = player.getBoundingClientRect();
-            const obstacleRect = obstacle.getBoundingClientRect();
-
-            // Basit AABB çarpışma kontrolü
-            if (playerRect.right > obstacleRect.left &&
-                playerRect.left < obstacleRect.right &&
-                playerRect.bottom > obstacleRect.top + 10 && // Zemin yüksekliğini hesaba kat
-                playerRect.top < obstacleRect.bottom) {
-                
-                 endGame(false);
+                endMessage.textContent = 'Game Over! 💥';
+                endDetail.textContent = `Bölüm ${level}'de kaldın. Engellere dikkat etmeliydin!`;
+                nextButton.textContent = 'Tekrar Dene';
+                nextButton.onclick = restartGame;
             }
         }
-        
-        // --- Engel Temizleme ---
-        function clearObstacles() {
-            document.querySelectorAll('.obstacle').forEach(obs => obs.remove());
+
+        function restartGame() {
+            startGame(); // Oyunu baştan başlat
         }
-        
-        // Başlangıç mesajını göster
-        message.classList.remove('hidden');
-        message.textContent = "BAŞLAMAK İÇİN TIKLA";
-        message.style.color = '#f1c40f';
-        
-        // JavaScript Kodları Bitişi
+
     </script>
 </body>
-
 </html>
